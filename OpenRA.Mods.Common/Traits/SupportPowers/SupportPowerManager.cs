@@ -146,6 +146,7 @@ namespace OpenRA.Mods.Common.Traits
 
 		public readonly List<SupportPower> Instances = [];
 		public readonly int TotalTicks;
+		public readonly Dictionary<string, int> SpecialResourcesUsing;
 
 		protected int remainingSubTicks;
 		public int RemainingTicks => remainingSubTicks / 100;
@@ -159,13 +160,15 @@ namespace OpenRA.Mods.Common.Traits
 		public SupportPowerInfo Info { get { return Instances.Select(i => i.Info).FirstOrDefault(); } }
 		public readonly string Name;
 		public readonly string Description;
-		public bool Ready => Active && RemainingTicks == 0;
+		public bool Ready => Active && RemainingTicks == 0 && SpecialResourcesEnough();
 
 		bool instancesEnabled;
 		bool prereqsAvailable = true;
 		bool oneShotFired;
 		protected bool notifiedCharging;
 		bool notifiedReady;
+
+		readonly PlayerResources playerResources;
 
 		public void ResetTimer()
 		{
@@ -176,11 +179,13 @@ namespace OpenRA.Mods.Common.Traits
 		{
 			Key = key;
 			TotalTicks = info.ChargeInterval;
+			SpecialResourcesUsing = info.SpecialResourcesUsing;
 			remainingSubTicks = info.StartFullyCharged ? 0 : TotalTicks * 100;
 			Name = info.Name == null ? string.Empty : FluentProvider.GetMessage(info.Name);
 			Description = info.Description == null ? string.Empty : FluentProvider.GetMessage(info.Description);
 
 			Manager = manager;
+			playerResources = Manager.Self.Owner.PlayerActor.TraitOrDefault<PlayerResources>();
 		}
 
 		public virtual void PrerequisitesAvailable(bool available)
@@ -189,6 +194,50 @@ namespace OpenRA.Mods.Common.Traits
 
 			if (!available)
 				remainingSubTicks = TotalTicks * 100;
+		}
+
+		public virtual bool SpecialResourcesEnough()
+		{
+			if (Manager.DevMode.FastCharge || SpecialResourcesUsing == null)
+				return true;
+
+			var flag = true;
+			foreach (var s in SpecialResourcesUsing)
+			{
+				if (playerResources.HasSpecialResources(s.Key) < s.Value)
+					flag = false;
+			}
+
+			return flag;
+		}
+
+		protected virtual void ExpendSpecialResources()
+		{
+			if (SpecialResourcesUsing == null)
+				return;
+
+			foreach (var s in SpecialResourcesUsing)
+			{
+				playerResources.TakeSpecialResource(s.Key, s.Value);
+			}
+		}
+
+		public virtual float PowerProgress()
+		{
+			if (SpecialResourcesUsing == null)
+			{
+				return 1 - (float)RemainingTicks / TotalTicks;
+			}
+			else
+			{
+				float progress = 0;
+				foreach (var s in SpecialResourcesUsing)
+				{
+					progress += (float)playerResources.HasSpecialResources(s.Key) / s.Value / SpecialResourcesUsing.Count;
+				}
+
+				return Math.Clamp(progress, 0, 1);
+			}
 		}
 
 		public virtual void Tick()
@@ -214,7 +263,7 @@ namespace OpenRA.Mods.Common.Traits
 				notifiedCharging = true;
 			}
 
-			if (RemainingTicks == 0 && !notifiedReady)
+			if (RemainingTicks == 0 && !notifiedReady && SpecialResourcesEnough())
 			{
 				power.Charged(power.Self, Key);
 				notifiedReady = true;
@@ -259,6 +308,7 @@ namespace OpenRA.Mods.Common.Traits
 
 			// Note: order.Subject is the *player* actor
 			power.Activate(power.Self, order, Manager);
+			ExpendSpecialResources();
 			remainingSubTicks = TotalTicks * 100;
 			notifiedCharging = notifiedReady = false;
 

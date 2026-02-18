@@ -54,10 +54,39 @@ namespace OpenRA.Mods.Common.Traits
 
 		int IAcceptResources.AcceptResources(Actor self, string resourceType, int count)
 		{
-			if (!playerResources.Info.ResourceValues.TryGetValue(resourceType, out var resourceValue))
+			var canAcceptRawResources = playerResources.CanAcceptSpecialRawResources(resourceType);
+			if (!playerResources.Info.ResourceValues.TryGetValue(resourceType, out var resourceValue) || !canAcceptRawResources)
 				return 0;
 
-			var value = Util.ApplyPercentageModifiers(count * resourceValue, resourceValueModifiers);
+			var cappedCount = count;
+
+			// Don't allow resources given to go above the count
+			if (canAcceptRawResources && info.UseStorage)
+			{
+				foreach (var rsv in playerResources.Info.SpecialResourceValues[resourceType])
+				{
+					var limitedCount = count;
+					var capacity = playerResources.SpecialResourcesCapacity[rsv.Key];
+					var had = playerResources.HasSpecialResources(rsv.Key);
+					var limit = Math.Max(capacity - had, 0);
+					var loadValue = limitedCount * rsv.Value;
+
+					// if true, the building will let havesters drop resources even if it can't take them
+					if (!info.DiscardExcessResources)
+					{
+						// Reduce amount if needed until it will fit the available storage
+						while (loadValue > limit)
+						{
+							// HACK: If you have a limit of e.g. 56, but each load gives 100, this will not give you 56
+							loadValue = --limitedCount * rsv.Value;
+						}
+					}
+
+					cappedCount = Math.Min(count, limitedCount);
+				}
+			}
+
+			var value = Util.ApplyPercentageModifiers(cappedCount * resourceValue, resourceValueModifiers);
 
 			if (info.UseStorage)
 			{
@@ -66,7 +95,7 @@ namespace OpenRA.Mods.Common.Traits
 				{
 					// Reduce amount if needed until it will fit the available storage
 					while (value > storageLimit)
-						value = Util.ApplyPercentageModifiers(--count * resourceValue, resourceValueModifiers);
+						value = Util.ApplyPercentageModifiers(--cappedCount * resourceValue, resourceValueModifiers);
 				}
 				else
 					value = Math.Min(value, playerResources.ResourceCapacity - playerResources.Resources);
@@ -76,18 +105,20 @@ namespace OpenRA.Mods.Common.Traits
 			else
 				value = playerResources.ChangeCash(value);
 
+			playerResources.GiveSpecialRawResources(cappedCount, resourceType);
+
 			foreach (var notify in self.World.ActorsWithTrait<INotifyResourceAccepted>())
 			{
 				if (notify.Actor.Owner != self.Owner)
 					continue;
 
-				notify.Trait.OnResourceAccepted(notify.Actor, self, resourceType, count, value);
+				notify.Trait.OnResourceAccepted(notify.Actor, self, resourceType, cappedCount, value);
 			}
 
 			if (info.ShowTicks)
 				currentDisplayValue += value;
 
-			return count;
+			return cappedCount;
 		}
 
 		void ITick.Tick(Actor self)

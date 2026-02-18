@@ -214,7 +214,7 @@ namespace OpenRA.Mods.Common.Widgets
 				// Charge progress
 				var sp = p.Power;
 				clock.PlayFetchIndex(ClockSequence,
-					() => sp.TotalTicks == 0 ? clock.CurrentSequence.Length - 1 : (sp.TotalTicks - sp.RemainingTicks)
+					() => sp.TotalTicks == 0 ? clock.CurrentSequence.Length - 1 : (int)sp.PowerProgress()
 					* (clock.CurrentSequence.Length - 1) / sp.TotalTicks);
 
 				clock.Tick();

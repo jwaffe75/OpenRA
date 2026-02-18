@@ -63,6 +63,10 @@ namespace OpenRA.Mods.Common.Traits
 		[Desc("Monetary value of each resource type.", "Dictionary of [resource type]: [value per unit].")]
 		public readonly FrozenDictionary<string, int> ResourceValues = FrozenDictionary<string, int>.Empty;
 
+
+		[Desc("Special value of each resource type.", "Dictionary of [resource type]: [usage1 type : value type], [usage2 type : value type]...  .")]
+		public readonly Dictionary<string, Dictionary<string, int>> SpecialResourceValues = new Dictionary<string, Dictionary<string, int>>();
+
 		IEnumerable<LobbyOption> ILobbyOptions.LobbyOptions(MapPreview map)
 		{
 			// Make sure that DefaultCash is included in the available options
@@ -83,6 +87,8 @@ namespace OpenRA.Mods.Common.Traits
 		public readonly PlayerResourcesInfo Info;
 		readonly Player owner;
 
+		public readonly string[] SpecialResourcesTypes;
+
 		public PlayerResources(Actor self, PlayerResourcesInfo info)
 		{
 			Info = info;
@@ -95,6 +101,28 @@ namespace OpenRA.Mods.Common.Traits
 				Cash = info.DefaultCash;
 
 			lastNotificationTime = -Info.InsufficientFundsNotificationInterval;
+
+			// HACK: Highly suspect loop
+			foreach (var resUsages in info.SpecialResourceValues)
+			{
+				foreach (var usage in resUsages.Value)
+				{
+					if (!specialResources.ContainsKey(usage.Key))
+					{
+						specialResources.Add(usage.Key, 0);
+						SpecialResourcesCapacity.Add(usage.Key, 0);
+					}
+				}
+			}
+
+			SpecialResourcesTypes = new string[specialResources.Count];
+			// HACK: I'm not sure ordering of keys is well defined in C#
+			var i = 0;
+			foreach (var kv in specialResources)
+			{
+				SpecialResourcesTypes[i] = kv.Key;
+				i++;
+			}
 		}
 
 		[VerifySync]
@@ -106,10 +134,75 @@ namespace OpenRA.Mods.Common.Traits
 		[VerifySync]
 		public int ResourceCapacity;
 
+		readonly Dictionary<string, int> specialResources = new Dictionary<string, int>();
+		public readonly Dictionary<string, int> SpecialResourcesCapacity = new Dictionary<string, int>();
+
 		public int Earned;
 		public int Spent;
 
 		long lastNotificationTime;
+
+
+		public void GiveSpecialRawResources(int count, string resourceValue)
+		{
+			Dictionary<string, int> allUsage;
+			if (Info.SpecialResourceValues.TryGetValue(resourceValue, out allUsage))
+			{
+				foreach (var u in allUsage)
+				{
+					GiveSpecialResources(u.Value * count, u.Key);
+				}
+			}
+		}
+
+		public bool CanAcceptSpecialRawResources(string resourceValue)
+		{
+			return Info.SpecialResourceValues.ContainsKey(resourceValue);
+		}
+
+		public void GiveSpecialResources(int num, string type)
+		{
+			// HACK: Does not take into account resource limits!
+			if (specialResources.ContainsKey(type))
+			{
+				specialResources[type] += num;
+			}
+		}
+
+		public int HasSpecialResources(string type)
+		{
+			if (specialResources.ContainsKey(type))
+			{
+				return specialResources[type];
+			}
+
+			return 0;
+		}
+
+		public bool HasSpecialResourcesType(string type)
+		{
+			if (specialResources.ContainsKey(type))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		public int TakeSpecialResource(string type, int desiredAmount)
+		{
+			if (!specialResources.ContainsKey(type))
+			{
+				// HACK: Need an error handling strategy
+				return -1;
+			}
+
+			var currentAmount = specialResources[type];
+			var amountToTake = Math.Min(desiredAmount, currentAmount);
+
+			specialResources[type] -= amountToTake;
+			return amountToTake;
+		}
 
 		public int ChangeCash(int amount)
 		{
@@ -259,6 +352,21 @@ namespace OpenRA.Mods.Common.Traits
 		public int GetCashAndResources()
 		{
 			return Cash + Resources;
+		}
+
+		public void AddSpecialStorage(int capacity, string type)
+		{
+			if (SpecialResourcesCapacity.ContainsKey(type))
+				SpecialResourcesCapacity[type] += capacity;
+		}
+
+		public void RemoveSpecialStorage(int capacity, string type)
+		{
+			if (SpecialResourcesCapacity.ContainsKey(type))
+				SpecialResourcesCapacity[type] -= capacity;
+
+			if (specialResources[type] > SpecialResourcesCapacity[type])
+				specialResources[type] = SpecialResourcesCapacity[type];
 		}
 	}
 }

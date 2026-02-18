@@ -12,6 +12,8 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using OpenRA.Primitives;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Traits
@@ -31,7 +33,7 @@ namespace OpenRA.Mods.Common.Traits
 		public override object Create(ActorInitializer init) { return new StoresResources(init.Self, this); }
 	}
 
-	public class StoresResources : IStoresResources, ISync
+	public class StoresResources : IStoresResources, ISync, INotifyKilled, INotifyAddedToWorld, INotifyRemovedFromWorld, INotifyCapture, INotifyOwnerChanged
 	{
 		readonly Dictionary<string, int> contents = [];
 		readonly StoresResourcesInfo info;
@@ -102,6 +104,97 @@ namespace OpenRA.Mods.Common.Traits
 			contents[resourceType] -= value;
 			ContentsSum -= value;
 			return 0;
+		}
+
+		static void PrintBeforeAfter(int beforeAmount, int beforeCapacity, int afterAmount, int afterCapacity)
+		{
+			Debug.WriteLine($"before amount={beforeAmount},before capacity={beforeCapacity}, after amount={afterAmount}, after capacity={afterCapacity}");
+		}
+
+		void OnRemoval(Actor self, Player oldOwner, Player newOwner)
+		{
+
+			Debug.WriteLine($"OnRemoval: {self.Info.Name}, oldOwner={oldOwner.PlayerName}");
+			var oldOwnerSpecialResources = oldOwner.PlayerActor.Trait<PlayerResources>();
+			foreach (var specialResourceType in oldOwnerSpecialResources.SpecialResourcesTypes)
+			{
+				Debug.WriteLine($"Resource type: {specialResourceType}");
+				if (!HasType(specialResourceType))
+				{
+					Debug.WriteLine("Is not contained by this building.");
+					continue;
+				}
+
+				var oldOwnerBeforeAmount = oldOwnerSpecialResources.HasSpecialResources(specialResourceType);
+				var oldOwnerBeforeCapacity = oldOwnerSpecialResources.SpecialResourcesCapacity[specialResourceType];
+
+				var amountTaken = oldOwnerSpecialResources.TakeSpecialResource(specialResourceType, info.Capacity);
+				oldOwnerSpecialResources.RemoveSpecialStorage(info.Capacity, specialResourceType);
+
+				var oldOwnerAfterAmount = oldOwnerSpecialResources.HasSpecialResources(specialResourceType);
+				var oldOwnerAfterCapacity = oldOwnerSpecialResources.SpecialResourcesCapacity[specialResourceType];
+
+				Debug.WriteLine("Old owner:");
+				PrintBeforeAfter(oldOwnerBeforeAmount, oldOwnerBeforeCapacity, oldOwnerAfterAmount, oldOwnerAfterCapacity);
+
+				if (newOwner != null)
+				{
+					var newOwnerSpecialResources = newOwner.PlayerActor.Trait<PlayerResources>();
+					var newOwnerBeforeAmount = newOwnerSpecialResources.HasSpecialResources(specialResourceType);
+					var newOwnerBeforeCapacity = newOwnerSpecialResources.SpecialResourcesCapacity[specialResourceType];
+					newOwnerSpecialResources.GiveSpecialResources(amountTaken, specialResourceType);
+					newOwnerSpecialResources.AddSpecialStorage(info.Capacity, specialResourceType);
+					var newOwnerAfterAmount = newOwnerSpecialResources.HasSpecialResources(specialResourceType);
+					var newOwnerAfterCapacity = newOwnerSpecialResources.SpecialResourcesCapacity[specialResourceType];
+
+					Debug.WriteLine($"New Owner: {newOwner.PlayerName}");
+					PrintBeforeAfter(newOwnerBeforeAmount, newOwnerBeforeCapacity, newOwnerAfterAmount, newOwnerAfterCapacity);
+				}
+			}
+		}
+
+		void INotifyOwnerChanged.OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
+		{
+			OnRemoval(self, oldOwner, newOwner);
+		}
+
+		void INotifyCapture.OnCapture(Actor self, Actor captor, Player oldOwner, Player newOwner, BitSet<CaptureType> captureTypes)
+		{
+			OnRemoval(self, oldOwner, newOwner);
+		}
+
+		void INotifyKilled.Killed(Actor self, AttackInfo e)
+		{
+			OnRemoval(self, self.Owner, null);
+		}
+
+		void INotifyAddedToWorld.AddedToWorld(Actor self)
+		{
+			Debug.WriteLine($"OnAddedToWorld: {self.Info.Name}");
+			// TODO: Does this run if the building is already in the map when it starts?
+			// HACK: It seems like there's only one Capacity field, for all the
+			// resources this might contain?
+			var playerResources = self.Owner.PlayerActor.Trait<PlayerResources>();
+
+			foreach (var specialResourceType in playerResources.SpecialResourcesTypes)
+			{
+				Debug.WriteLine($"Resource {specialResourceType}");
+				if (!HasType(specialResourceType))
+				{
+					Debug.WriteLine("Is not contained by this building");
+					continue;
+				}
+
+				var oldStorage = playerResources.SpecialResourcesCapacity[specialResourceType];
+				playerResources.AddSpecialStorage(info.Capacity, specialResourceType);
+				var newStorage = playerResources.SpecialResourcesCapacity[specialResourceType];
+				Debug.WriteLine($"Before storage: {oldStorage}, After storage: {newStorage}");
+			}
+		}
+
+		void INotifyRemovedFromWorld.RemovedFromWorld(Actor self)
+		{
+			OnRemoval(self, self.Owner, null);
 		}
 	}
 }
