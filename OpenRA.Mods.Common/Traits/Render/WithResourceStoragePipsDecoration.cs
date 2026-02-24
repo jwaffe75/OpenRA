@@ -15,65 +15,33 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Traits.Render
 {
-	public class WithResourceStoragePipsDecorationInfo : WithDecorationBaseInfo
+	public class WithResourceStoragePipsDecorationInfo : WithResourceStoragePipsDecorationInfoBase
 	{
-		[FieldLoader.Require]
-		[Desc("Number of pips to display how filled unit is.")]
-		public readonly int PipCount = 0;
-
-		[Desc("If non-zero, override the spacing between adjacent pips.")]
-		public readonly int2 PipStride = int2.Zero;
-
-		[Desc("Image that defines the pip sequences.")]
-		public readonly string Image = "pips";
-
-		[SequenceReference(nameof(Image))]
-		[Desc("Sequence used for empty pips.")]
-		public readonly string EmptySequence = "pip-empty";
-
-		[SequenceReference(nameof(Image))]
-		[Desc("Sequence used for full pips.")]
-		public readonly string FullSequence = "pip-green";
-
-		[PaletteReference]
-		public readonly string Palette = "chrome";
-
 		public override object Create(ActorInitializer init) { return new WithResourceStoragePipsDecoration(init.Self, this); }
 	}
 
-	public class WithResourceStoragePipsDecoration : WithDecorationBase<WithResourceStoragePipsDecorationInfo>, INotifyOwnerChanged
+	public class WithResourceStoragePipsDecoration : WithResourceStoragePipsDecorationBase<WithResourceStoragePipsDecorationInfo>, INotifyOwnerChanged
 	{
-		readonly Animation pips;
-		PlayerResources player;
-
+		protected PlayerResources player;
 		public WithResourceStoragePipsDecoration(Actor self, WithResourceStoragePipsDecorationInfo info)
 			: base(self, info)
 		{
 			player = self.Owner.PlayerActor.Trait<PlayerResources>();
-			pips = new Animation(self.World, info.Image);
-		}
-
-		protected override IEnumerable<IRenderable> RenderDecoration(Actor self, WorldRenderer wr, int2 screenPos)
-		{
-			pips.PlayRepeating(Info.EmptySequence);
-
-			var palette = wr.Palette(Info.Palette);
-			var pipSize = pips.Image.Size.XY.ToInt2();
-			var pipStride = Info.PipStride != int2.Zero ? Info.PipStride : new int2(pipSize.X, 0);
-
-			screenPos -= pipSize / 2;
-			for (var i = 0; i < Info.PipCount; i++)
-			{
-				pips.PlayRepeating(player.Resources * Info.PipCount > i * player.ResourceCapacity ? Info.FullSequence : Info.EmptySequence);
-				yield return new UISpriteRenderable(pips.Image, self.CenterPosition, screenPos, 0, palette);
-
-				screenPos += pipStride;
-			}
 		}
 
 		void INotifyOwnerChanged.OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
 		{
 			player = newOwner.PlayerActor.Trait<PlayerResources>();
+		}
+
+		public override int Capacity
+		{
+			get => player.ResourceCapacity;
+		}
+
+		public override int Amount
+		{
+			get => player.Resources;
 		}
 	}
 }

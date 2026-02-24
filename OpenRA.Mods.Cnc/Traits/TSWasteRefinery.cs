@@ -61,19 +61,7 @@ namespace OpenRA.Mods.Cnc.Traits
 				contribution = count;
 			}
 
-			Debug.WriteLine($"veinFullAmount={veinFullAmount}, currentVeins={currentVeins}, amountToFull={amountToFull}, count={count}, contribution={contribution}");
-
-			// TODO: Is INotifyResourceAccepted useful for support powers?
-			/*
-			foreach (var notify in self.World.ActorsWithTrait<INotifyResourceAccepted>())
-			{
-				if (notify.Actor.Owner != self.Owner)
-					continue;
-
-				notify.Trait.OnResourceAccepted(notify.Actor, self, resourceType, count, value);
-			}
-			*/
-
+			// Debug.WriteLine($"veinFullAmount={veinFullAmount}, currentVeins={currentVeins}, amountToFull={amountToFull}, count={count}, contribution={contribution}");
 			playerResources.Veins += contribution;
 			currentDisplayValue += contribution;
 			return contribution;

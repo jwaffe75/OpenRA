@@ -9,7 +9,9 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
+using Linguini.Bundle.Errors;
 using OpenRA.Graphics;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Mods.Common.Traits.Render;
@@ -17,61 +19,37 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.Cnc.Traits.Render
 {
-	public class WithVeinsPipsDecorationInfo : WithDecorationBaseInfo
+	public class WithVeinsPipsDecorationInfo : WithResourceStoragePipsDecorationInfoBase
 	{
-		[FieldLoader.Require]
-		[Desc("Number of pips to display how filled unit is.")]
-		public readonly int PipCount = 15;
-
-		[Desc("If non-zero, override the spacing between adjacent pips.")]
-		public readonly int2 PipStride = int2.Zero;
-
-		[Desc("Image that defines the pip sequences.")]
-		public readonly string Image = "pips";
-
-		[SequenceReference(nameof(Image))]
-		[Desc("Sequence used for empty pips.")]
-		public readonly string EmptySequence = "pip-empty-building";
-
-		[SequenceReference(nameof(Image))]
-		[Desc("Sequence used for full pips.")]
-		public readonly string FullSequence = "pip-red-building";
-
-		[PaletteReference]
-		public readonly string Palette = "pips";
-
-		public override object Create(ActorInitializer init) { return new WithVeinsPipsDecoration(init.Self, this); }
+		public override object Create(ActorInitializer init)
+		{
+			return new WithVeinsPipsDecoration(init.Self, this);
+		}
 	}
 
-	public class WithVeinsPipsDecoration : WithDecorationBase<WithVeinsPipsDecorationInfo>
+	public class WithVeinsPipsDecoration : WithResourceStoragePipsDecorationBase<WithResourceStoragePipsDecorationInfoBase>, INotifyOwnerChanged
 	{
-		readonly Animation pips;
-		readonly TSPlayerResources player;
+		protected TSPlayerResources player;
 
 		public WithVeinsPipsDecoration(Actor self, WithVeinsPipsDecorationInfo info)
-			: base(self, info)
+		: base(self, info)
 		{
 			player = self.Owner.PlayerActor.Trait<TSPlayerResources>();
-			pips = new Animation(self.World, info.Image);
 		}
 
-		protected override IEnumerable<IRenderable> RenderDecoration(Actor self, WorldRenderer wr, int2 screenPos)
+		public override int Capacity
 		{
-			pips.PlayRepeating(Info.EmptySequence);
+			get => player.Info.TriggerChemicalMissileOnVeinsAmount;
+		}
 
-			var palette = wr.Palette(Info.Palette);
-			var pipSize = pips.Image.Size.XY.ToInt2();
-			var pipStride = Info.PipStride != int2.Zero ? Info.PipStride : new int2(pipSize.X, 0);
+		public override int Amount
+		{
+			get => player.Veins;
+		}
 
-			screenPos -= pipSize / 2;
-			for (var pipIndex = 0; pipIndex < Info.PipCount; pipIndex++)
-			{
-				var pipIsFilled = player.Veins * Info.PipCount > pipIndex * player.Info.TriggerChemicalMissileOnVeinsAmount;
-				pips.PlayRepeating(pipIsFilled ? Info.FullSequence : Info.EmptySequence);
-				yield return new UISpriteRenderable(pips.Image, self.CenterPosition, screenPos, 0, palette);
-
-				screenPos += pipStride;
-			}
+		void INotifyOwnerChanged.OnOwnerChanged(Actor self, Player oldOwner, Player newOwner)
+		{
+			player = newOwner.PlayerActor.Trait<TSPlayerResources>();
 		}
 	}
 }

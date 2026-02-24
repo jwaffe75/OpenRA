@@ -9,6 +9,7 @@
  */
 #endregion
 
+using System.Diagnostics;
 using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 using OpenRA.Traits;
@@ -20,7 +21,7 @@ namespace OpenRA.Mods.Cnc.Traits
 		public override object Create(ActorInitializer init) { return new TSStoresVeins(init.Self, this); }
 	}
 
-	public class TSStoresVeins : INotifyKilled
+	public class TSStoresVeins : INotifyRemovedFromWorld
 	{
 		readonly TSStoresVeinsInfo info;
 		TSPlayerResources player;
@@ -39,11 +40,16 @@ namespace OpenRA.Mods.Cnc.Traits
 			player = self.Owner.PlayerActor.Trait<TSPlayerResources>();
 		}
 
-		void INotifyKilled.Killed(Actor self, AttackInfo e)
+		void INotifyRemovedFromWorld.RemovedFromWorld(Actor self)
 		{
-			// Lose the stored resources.
+			// It looks like this event happens when the building is either destroyed or sold
+			// This building cannot be captured, so there is no need to handle the captured events.
+			//
+			// the reason why this building is marked as not capturable is because there's a
+			// maximum of one building allowed, and I'm not sure how to make it so that engineers
+			// won't enter it if there's already a waste silo under ownership of the player trying
+			// to capture it.
 			player.Veins = 0;
 		}
-
 	}
 }
