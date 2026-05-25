@@ -112,6 +112,17 @@ Pistola:
 	Warhead@3EffWater: CreateEffect
 		Explosions: water_piff
 
+ShitPistol:
+	Inherits: ^MG
+	Range: 1c0
+	Report: gun18.aud
+	Warhead@1Dam: SpreadDamage
+		Damage: 5
+	Warhead@2Eff: CreateEffect
+		Explosions: piff
+	Warhead@3EffWater: CreateEffect
+		Explosions: water_piff
+
 Sniper:
 	Inherits: ^MG
 	ReloadDelay: 60

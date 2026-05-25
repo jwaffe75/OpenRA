@@ -19,7 +19,7 @@ E1:
 	Mobile:
 		Speed: 71
 	Armament@PRIMARY:
-		Weapon: Minigun
+		Weapon: ShitPistol
 		RequiresCondition: !rank-elite
 	Armament@ELITE:
 		Weapon: M1Carbine
