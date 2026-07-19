@@ -1,0 +1,42 @@
+foundation:
+	Inherits: ^Building
+	Inherits@SHAPE: ^2x2Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 10
+		Prerequisites: ~structures.nod, ~techlevel.low
+		Description: actor-foundation.description
+	Valued:
+		Cost: 10
+	Tooltip:
+		Name: actor-foundation.name
+	ProvidesPrerequisite:
+		Prerequisite: anypower
+	Building:
+		Footprint: xx xx
+		Dimensions: 2,2
+	Health:
+		HP: 75000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4c0
+		MaxHeightDelta: 3
+	WithIdleOverlay@LIGHTS:
+		RequiresCondition: !build-incomplete && !empdisable
+		Sequence: idle-lights
+		Palette: player-nobright
+		IsPlayerPalette: True
+	WithIdleOverlay@LIGHTS-BRIGHT:
+		RequiresCondition: !build-incomplete && !empdisable
+		Sequence: idle-lights-bright
+		Palette: bright
+	Power:
+		Amount: 100
+		RequiresCondition: !empdisable
+	Targetable:
+		TargetTypes: Ground, Building, C4, SpyInfiltrate
+	ScalePowerWithHealth:
+	PowerTooltip:
+	IsometricSelectable:
+		Height: 48

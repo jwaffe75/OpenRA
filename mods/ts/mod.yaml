@@ -40,6 +40,7 @@ FileSystem: ContentInstallerFileSystem
 		~content|firestorm/scores01.mix
 		# Below are mod-provided (system) packages that need to be loaded after the content packages so they can override content assets.
 		ts|bits
+		ts|bits/custom
 	ContentInstallerMod: ts-content
 
 MapFolders:
@@ -73,6 +74,7 @@ Rules:
 	ts|rules/shared-vehicles.yaml
 	ts|rules/trees.yaml
 	ts|rules/bridges.yaml
+	ts|rules/custom/foundation.yaml
 
 Weapons:
 	ts|weapons/ballisticweapons.yaml
@@ -94,6 +96,7 @@ Sequences:
 	ts|sequences/trees.yaml
 	ts|sequences/bridges.yaml
 	ts|sequences/critters.yaml
+	ts|sequences/custom/foundation.yaml
 
 ModelSequences:
 	ts|sequences/voxels.yaml
@@ -183,6 +186,7 @@ FluentMessages:
 	ts|fluent/chrome.ftl
 	ts|fluent/hotkeys.ftl
 	ts|fluent/rules.ftl
+	ts|fluent/custom/foundation.ftl
 
 AllowUnusedFluentMessagesInExternalPackages: false
 
@@ -261,7 +265,7 @@ SupportsMapsFrom: ts
 
 SoundFormats: Aud, Wav
 
-SpriteFormats: ShpTS, TmpTS, ShpTD
+SpriteFormats: ShpTS, TmpTS, ShpTD, PngSheet
 
 VideoFormats: Vqa
 

@@ -20,6 +20,7 @@ using System.Text;
 using OpenRA.Primitives;
 using OpenRA.Support;
 using OpenRA.Traits;
+using System.Diagnostics;
 
 namespace OpenRA
 {
@@ -132,6 +133,7 @@ namespace OpenRA
 		{
 			// Cannot use CollectionsMarshal.GetValueRefOrAddDefault here,
 			// the creation function could mutate the dictionary which would invalidate the ref.
+			Debug.Assert(k != null, "Key must not be null");
 			if (!d.TryGetValue(k, out var ret))
 				d.Add(k, ret = createFn(k));
 			return ret;
