@@ -22,15 +22,6 @@ foundation:
 	RevealsShroud:
 		Range: 4c0
 		MaxHeightDelta: 3
-	WithIdleOverlay@LIGHTS:
-		RequiresCondition: !build-incomplete && !empdisable
-		Sequence: idle-lights
-		Palette: player-nobright
-		IsPlayerPalette: True
-	WithIdleOverlay@LIGHTS-BRIGHT:
-		RequiresCondition: !build-incomplete && !empdisable
-		Sequence: idle-lights-bright
-		Palette: bright
 	Power:
 		Amount: 100
 		RequiresCondition: !empdisable
@@ -39,4 +30,4 @@ foundation:
 	ScalePowerWithHealth:
 	PowerTooltip:
 	IsometricSelectable:
-		Height: 48
+		Height: 20

@@ -1,48 +1,15 @@
 foundation:
 	Defaults:
-		FileName: foundation.png
-		Offset: 0, 0,0
+		TilesetFilenames:
+			TEMPERATE: foundation.png
+			SNOW: foundation.png
+		#Offset: 0, -24, 24
+		Offset: 0, 22, 22
+		DepthSprite: isodepth.shp
 	icon:
 		Filename: foundation-icon.png
-		Offset: 0, 0
 	idle:
 		FileName: foundation.png
-		Offset: 0,0,0
-	damaged-idle:
-		Start: 1
-		ShadowStart: 4
-	dead:
-		Start: 2
-		ShadowStart: 5
-		Tick: 400
-	idle-lights:
-		TilesetFilenames:
-			TEMPERATE: ntpowr_a.shp
-			SNOW: napowr_a.shp
-		Length: 9
-		Tick: 200
-	idle-lights-bright:
-		TilesetFilenames:
-			TEMPERATE: ntpowr_a.shp
-			SNOW: napowr_a.shp
-		Length: 9
-		Tick: 200
-		IgnoreWorldTint: True
-	damaged-idle-lights:
-		TilesetFilenames:
-			TEMPERATE: ntpowr_a.shp
-			SNOW: napowr_a.shp
-		Start: 9
-		Length: 9
-		Tick: 200
-	damaged-idle-lights-bright:
-		TilesetFilenames:
-			TEMPERATE: ntpowr_a.shp
-			SNOW: napowr_a.shp
-		Start: 9
-		Length: 9
-		Tick: 200
-		IgnoreWorldTint: True
 	make:
 		TilesetFilenames:
 			TEMPERATE: ntpowrmk.shp
