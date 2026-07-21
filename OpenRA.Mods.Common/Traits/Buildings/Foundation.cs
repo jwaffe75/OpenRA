@@ -10,32 +10,54 @@
 #endregion
 
 using System.Collections.Frozen;
+using System.Collections.Immutable;
 using System.Linq;
+using OpenRA.Activities;
+using OpenRA.Mods.Common.Activities;
 using OpenRA.Primitives;
 using OpenRA.Traits;
 
 namespace OpenRA.Mods.Common.Traits
 {
 	[Desc("A buildable foundation")]
-	public class FoundationInfo : TurretedInfo
+	public class FoundationInfo : TraitInfo
 	{
 
 		[Desc("Damage types that trigger prone state. Defined on the warheads.",
 			"If Duration is negative (permanent), you can leave this empty to trigger prone state immediately.")]
 		public readonly BitSet<DamageType> DamageTriggers = default;
 
+		[ActorReference]
+		//[FieldLoader.Require]
+		[Desc("Actor to transform into when the build is done.")]
+		public readonly string IntoActor = "napowr";
+
+		[Desc("Offset to spawn the transformed actor relative to the current cell.")]
+		public readonly CVec Offset = CVec.Zero;
+
+		[Desc("Sounds to play when transforming.")]
+		public readonly ImmutableArray<string> TransformSounds = [];
+
+
 		public override object Create(ActorInitializer init) { return new Foundation(init, this); }
+
 
 	}
 
-	public class Foundation : Turreted, INotifyDamage, ISync
+	public class Foundation : ITick, INotifyDamage, ISync
 	{
 		public int BuildProgress { get; protected set; }
 		readonly FoundationInfo info;
 
-		public Foundation(ActorInitializer init, FoundationInfo info) : base(init, info)
+		bool transformed = false;
+		readonly string faction;
+		readonly Actor self;
+
+		public Foundation(ActorInitializer init, FoundationInfo info)
 		{
 			this.info = info;
+			self = init.Self;
+			faction = init.GetValue<FactionInit, string>(self.Owner.Faction.InternalName);
 		}
 
 		void INotifyDamage.Damaged(Actor self, AttackInfo e)
@@ -52,22 +74,33 @@ namespace OpenRA.Mods.Common.Traits
 			BuildProgress += e.Damage.Value;
 		}
 
-		/*
-				protected override void Tick(Actor self)
-				{
-					base.Tick(self);
+		
+		void ITick.Tick(Actor self)
+		{
+			if (transformed) {
+				return;
+			}
 
-					if (IsTraitDisabled || info.Duration < 0)
-						return;
-
-					if (!IsTraitPaused && remainingDuration > 0)
-						remainingDuration--;
-
-					if (isProne && remainingDuration == 0)
-						SetProneState(false);
-				}
-		*/
-		public override bool HasAchievedDesiredFacing => true;
+			bool done = (BuildProgress >= 100);
+			if (done)
+			{
+				self.QueueActivity(false, GetTransformActivity());
+				transformed = true;
+			}
+		}
+		
+		public Activity GetTransformActivity()
+		{
+			return new Transform(info.IntoActor)
+			{
+				Offset = info.Offset,
+				Facing = new(384),
+				Sounds = info.TransformSounds,
+				Notification = null,
+				TextNotification = null,
+				Faction = faction
+			};
+		}
 
 		/*
 		int IDamageModifier.GetDamageModifier(Actor attacker, Damage damage)
@@ -83,12 +116,5 @@ namespace OpenRA.Mods.Common.Traits
 		}
 		*/
 
-		protected override void TraitDisabled(Actor self)
-		{
-		}
-
-		protected override void TraitEnabled(Actor self)
-		{
-		}
 	}
 }

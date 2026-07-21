@@ -31,3 +31,14 @@ foundation:
 	PowerTooltip:
 	IsometricSelectable:
 		Height: 20
+	Foundation:
+		IntoActor: napowr
+	WithBuildPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: false
+		Margin: 8, 2
+		FullSequence: pip-green-building
+		EmptySequence: pip-empty-building
+		PipStride: 4, 2
+		PipCount: 12
+		Palette: pips
