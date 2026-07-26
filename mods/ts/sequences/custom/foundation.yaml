@@ -25,3 +25,10 @@ foundation:
 		BlendMode: Additive
 		IgnoreWorldTint: True
 		DepthSprite:
+	dead:
+		TilesetFilenames:
+			TEMPERATE: ntpowrmk.shp
+			SNOW: napowrmk.shp
+		Start: 2
+		ShadowStart: 5
+		Tick: 400

@@ -1,0 +1,29 @@
+BUILDER:
+	Inherits: ^Soldier
+	Valued:
+		Cost: 10
+	Tooltip:
+		Name: actor-builder.name
+	Buildable:
+		Queue: Infantry
+		BuildPaletteOrder: 10
+		Prerequisites: 
+		Description: actor-builder.description
+	RenderSprites:
+		Image: builder
+	WithSplitAttackPaletteInfantryBody:
+		DefaultAttackSequence: attack
+		Palette: player-nomuzzle
+		IsPlayerPalette: true
+		SplitAttackPalette: muzzle
+	Armament:
+		Weapon: BuildWeapon
+		Cursor: repair
+		OutsideRangeCursor: repair
+		TargetRelationships: Ally
+		ForceTargetRelationships: None
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+	Voiced:
+		VoiceSet: CivilianTechnician

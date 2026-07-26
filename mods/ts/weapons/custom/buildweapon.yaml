@@ -1,0 +1,16 @@
+BuildWeapon:
+	ReloadDelay: 80
+	Range: 2c849
+	Report: repair11.aud
+	ValidTargets: Build
+	TargetActorCenter: true
+	Projectile: InstantHit
+	Warhead@1Eff: FlashTargetsInRadius
+		ValidTargets: Build
+		ValidRelationships: Ally
+	Warhead@2Dam: TargetDamage
+		DebugOverlayColor: 00FF00
+		Damage: 20
+		ValidTargets: Build
+		ValidRelationships: Ally
+		DamageTypes: Build

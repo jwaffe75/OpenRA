@@ -75,6 +75,7 @@ Rules:
 	ts|rules/trees.yaml
 	ts|rules/bridges.yaml
 	ts|rules/custom/foundation.yaml
+	ts|rules/custom/builder.yaml
 
 Weapons:
 	ts|weapons/ballisticweapons.yaml
@@ -85,6 +86,7 @@ Weapons:
 	ts|weapons/otherweapons.yaml
 	ts|weapons/smallguns.yaml
 	ts|weapons/superweapons.yaml
+	ts|weapons/custom/buildweapon.yaml
 
 Sequences:
 	ts|sequences/aircraft.yaml
@@ -97,6 +99,7 @@ Sequences:
 	ts|sequences/bridges.yaml
 	ts|sequences/critters.yaml
 	ts|sequences/custom/foundation.yaml
+	ts|sequences/custom/builder.yaml
 
 ModelSequences:
 	ts|sequences/voxels.yaml
@@ -187,6 +190,7 @@ FluentMessages:
 	ts|fluent/hotkeys.ftl
 	ts|fluent/rules.ftl
 	ts|fluent/custom/foundation.ftl
+	ts|fluent/custom/builder.ftl
 
 AllowUnusedFluentMessagesInExternalPackages: false
 

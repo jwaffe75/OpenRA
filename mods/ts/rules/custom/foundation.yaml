@@ -16,7 +16,8 @@ foundation:
 		Footprint: xx xx
 		Dimensions: 2,2
 	Health:
-		HP: 75000
+		#HP: 75000
+		HP: 100
 	Armor:
 		Type: Wood
 	RevealsShroud:
@@ -26,7 +27,7 @@ foundation:
 		Amount: 100
 		RequiresCondition: !empdisable
 	Targetable:
-		TargetTypes: Ground, Building, C4, SpyInfiltrate
+		TargetTypes: Ground, Building, C4, SpyInfiltrate, Build
 	ScalePowerWithHealth:
 	PowerTooltip:
 	IsometricSelectable:

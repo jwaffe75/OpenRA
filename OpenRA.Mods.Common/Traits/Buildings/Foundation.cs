@@ -44,7 +44,7 @@ namespace OpenRA.Mods.Common.Traits
 
 	}
 
-	public class Foundation : ITick, INotifyDamage, ISync
+	public class Foundation : ITick, INotifyDamage, ISync, IDamageModifier
 	{
 		public int BuildProgress { get; protected set; }
 		readonly FoundationInfo info;
@@ -52,6 +52,8 @@ namespace OpenRA.Mods.Common.Traits
 		bool transformed = false;
 		readonly string faction;
 		readonly Actor self;
+
+		readonly BitSet<DamageType> buildOnly = new(["Build"]);
 
 		public Foundation(ActorInitializer init, FoundationInfo info)
 		{
@@ -62,19 +64,15 @@ namespace OpenRA.Mods.Common.Traits
 
 		void INotifyDamage.Damaged(Actor self, AttackInfo e)
 		{
-			/*
-			if (IsTraitPaused || IsTraitDisabled)
-				return;
 
-			
-			if (e.Damage.Value <= 0 || !e.Damage.DamageTypes.Overlaps(info.DamageTriggers))
+			if (!e.Damage.DamageTypes.Overlaps(buildOnly))
+			{
 				return;
-			*/
+			}
 
-			BuildProgress += e.Damage.Value;
+			BuildProgress += 20;
 		}
-
-		
+	
 		void ITick.Tick(Actor self)
 		{
 			if (transformed) {
@@ -102,19 +100,14 @@ namespace OpenRA.Mods.Common.Traits
 			};
 		}
 
-		/*
 		int IDamageModifier.GetDamageModifier(Actor attacker, Damage damage)
 		{
+			if (damage.DamageTypes == buildOnly)
+			{
+				return 0;
+			}
 
-			
-			if (damage == null || damage.DamageTypes.IsEmpty)
-				return 100;
-
-			var modifierPercentages = info.DamageModifiers.Where(x => damage.DamageTypes.Contains(x.Key)).Select(x => x.Value);
-			return Util.ApplyPercentageModifiers(100, modifierPercentages);
-			
+			return 100;
 		}
-		*/
-
 	}
 }

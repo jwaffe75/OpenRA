@@ -1,0 +1,7 @@
+builder:
+	Inherits: ^BasicInfantry
+	Inherits@attack: ^BasicInfantryAttack
+	Defaults:
+		Filename: civ3.shp
+	icon:
+		Filename: builder-icon.png
